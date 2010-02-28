@@ -143,7 +143,7 @@ endfunc
 "    2) build the new uri (add basepath, add extension if defined)
 "    3) return Utl_AddressScheme_{scheme}(new_uri)
 "  Doc: <../plugin/utl_scm.vim#r=implscmfunc>
-function! utlx_interwiki#HandleScheme_interwiki(auri, fragment, mode)
+function! utlx_interwiki#HandleScheme_interwiki(auri, fragment, mode, utl_version)
    if g:utlextra_import_viki > 0
       call s:ParseViki_InterVikis()
       let g:utlextra_import_viki = 0
@@ -158,26 +158,25 @@ function! utlx_interwiki#HandleScheme_interwiki(auri, fragment, mode)
    let wiki = UtlUri_authority(a:auri)
    let path = UtlUri_path(a:auri)
    let query = UtlUri_query(a:auri)
+   if a:utl_version < 3 | let result = ''
+   else | let result = [] | endif
    if path == '' 
       if wiki == ''
          echom 'Utl_InterWiki: Malformed interwiki: "' . a:auri . '"'
-         return []
+         return result
       endif
    endif
 
    " If wiki is not given, try to find a wiki pointing to the current directory
-   if wiki == ''
+   if wiki == '' || wiki == '.'
       let b:utlextra_interwikis['!local'] = ['!', ''] " easier than removing
       let bufdir = fnamemodify(expand('%'), ':p:h')
       let wiki = s:FindCurrentWiki(bufdir)
       if wiki == ''
-         " Create an entry for the current directory with extension of current
-         " buffer
+         " Create an entry for the current directory with extension of current buffer
          let wiki = '!local'
          let ext = '.' . fnamemodify(expand('%'), ':e')
          let b:utlextra_interwikis[wiki] = [bufdir, ext]
-         "echom 'Utl_InterWiki: Current file is not part of a wiki.'
-         "return []
       endif
    endif
    
@@ -202,7 +201,7 @@ function! utlx_interwiki#HandleScheme_interwiki(auri, fragment, mode)
    endif
    if len(wikidef) < 1
       echom 'Utl_InterWiki: Unknown wiki "' . wiki . '"'
-      return []
+      return result
    endif
 
    let newscheme = UtlUri_scheme(wikidef[0])
@@ -224,9 +223,13 @@ function! utlx_interwiki#HandleScheme_interwiki(auri, fragment, mode)
       if frag == '<undef>'
          let frag = ''
       endif
-      let result = Utl_AddressScheme_{newscheme}(newuri, frag, a:mode)
+      if a:utl_version < 3
+         let result = Utl_AddressScheme_{newscheme}(newuri)
+      else
+         let result = Utl_AddressScheme_{newscheme}(newuri, frag, a:mode)
+      endif
       return result
    endif
-   return []
+   return result
 endfunc
 

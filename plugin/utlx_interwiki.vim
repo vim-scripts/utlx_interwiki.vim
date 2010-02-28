@@ -11,11 +11,20 @@ endif
 if ! exists('g:utlextra_interwiki_scheme')
    let g:utlextra_interwiki_scheme =  "iw"
 endif
+if ! exists('g:utlextra_utl_version')
+   let g:utlextra_utl_version =  2
+endif
    for s:schm in split(g:utlextra_interwiki_scheme, '\m\s*,\s*')
       if s:schm == '' | continue | endif
-      let s:iwschema  = "function! Utl_AddressScheme_%s(auri, fragment, mode)\n"
-      let s:iwschema .= "return utlx_interwiki#HandleScheme_interwiki(a:auri, a:fragment, a:mode)\n"
-      let s:iwschema .= "endfunc"
+      if g:utlextra_utl_version < 3
+         let s:iwschema  = "function! Utl_AddressScheme_%s(auri)\n"
+         let s:iwschema .= "return utlx_interwiki#HandleScheme_interwiki(a:auri, '', '', 2)\n"
+         let s:iwschema .= "endfunc"
+      else
+         let s:iwschema  = "function! Utl_AddressScheme_%s(auri, fragment, mode)\n"
+         let s:iwschema .= "return utlx_interwiki#HandleScheme_interwiki(a:auri, a:fragment, a:mode, 3)\n"
+         let s:iwschema .= "endfunc"
+      endif
       let s:iwschema  = printf(s:iwschema, s:schm)
       exec s:iwschema
    endfor
