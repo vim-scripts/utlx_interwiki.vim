@@ -12,7 +12,7 @@ if ! exists('g:utlextra_interwiki_scheme')
    let g:utlextra_interwiki_scheme =  "iw"
 endif
 if ! exists('g:utlextra_utl_version')
-   let g:utlextra_utl_version =  2
+   let g:utlextra_utl_version =  3
 endif
    for s:schm in split(g:utlextra_interwiki_scheme, '\m\s*,\s*')
       if s:schm == '' | continue | endif

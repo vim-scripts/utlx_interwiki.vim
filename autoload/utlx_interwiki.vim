@@ -7,6 +7,9 @@
 " License: GPL (http://www.gnu.org/copyleft/gpl.html)
 " This program comes with ABSOLUTELY NO WARRANTY.
 
+" [script]: http://www.vim.org/scripts/script.php?script_id=%p
+" This script: iw://script/2997
+" utl.vim:     iw://script/293
 if ! exists('g:loaded_au_utlx_interwiki') || ! g:loaded_au_utlx_interwiki
    let g:loaded_au_utlx_interwiki = 1
 else
@@ -208,8 +211,23 @@ function! utlx_interwiki#HandleScheme_interwiki(auri, fragment, mode, utl_versio
    if newscheme == '<undef>'
       let newscheme = 'file'
    endif
-   let authority = UtlUri_authority(wikidef[0])
-   let basepath = UtlUri_path(wikidef[0])
+
+   " If %p is in newauri, it is replaced with path, otherwise path
+   " will be appended to basepath
+   let newauri = wikidef[0]
+   let ppos = match(newauri, '%p')
+   if  ppos >= 0
+      let qpos = match(newauri, '\m?')
+      echom '%' . ppos . ' ?' . qpos
+      if qpos < ppos
+         let path = substitute(path, '^/*\(.*\)/*$', '\1', '')
+      endif
+      let newauri = substitute(newauri, '%p', path, '')
+      let path = ''
+   endif
+   let authority = UtlUri_authority(newauri)
+   let basepath = UtlUri_path(newauri)
+   let basequery = UtlUri_query(newauri)
    if newscheme == 'file' && wikidef[1] != ''
       let ext = fnamemodify(path, ':e')
       if ext == ''
@@ -218,6 +236,13 @@ function! utlx_interwiki#HandleScheme_interwiki(auri, fragment, mode, utl_versio
    endif
 
    if newscheme != scheme && exists('*Utl_AddressScheme_' . newscheme)
+      if basequery != '<undef>'
+         if query == '<undef>'
+            let query = basequery
+         else
+            let query = basequery . query
+         endif
+      endif
       let newuri = UtlUri_build(newscheme, authority, basepath . path, query, '<undef>') 
       let frag = a:fragment
       if frag == '<undef>'
