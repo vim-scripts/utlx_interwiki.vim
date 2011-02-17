@@ -16,6 +16,13 @@ else
    finish
 endif
 
+function utlx_interwiki#Init()
+   if g:utlextra_import_viki > 0
+      call s:ParseViki_InterVikis()
+      let g:utlextra_import_viki = 0
+   endif
+endfun
+
 " =========================================================================== 
 " Local Initialization - on autoload
 " =========================================================================== 
@@ -31,21 +38,33 @@ endif
 " =========================================================================== 
 
 function! s:ParseViki_InterVikis()
-   if ! exists('g:vikiInterVikiNames')
+   let names = []
+   if exists('g:vikiInterVikiNames')
+      for iviki in g:vikiInterVikiNames
+         call add(names, matchstr(iviki, '^.*\ze::'))
+      endfor
+   elseif exists('g:viki_intervikis')
+      let names = keys(g:viki_intervikis)
+   else
       return
    endif
-   for iviki in g:vikiInterVikiNames
-      let iviki = matchstr(iviki, '^.*\ze::')
+
+   for iviki in names
       if has_key(g:utlextra_interwikis, iviki)
          continue
       endif
-      if ! exists('g:vikiInter' . iviki)
-         continue
-      endif
-      let ivaddr = g:vikiInter{iviki}
+      let ivaddr = ''
       let ivsfx = ''
-      if exists('g:vikiInter' . iviki . '_suffix')
-         let ivsfx = g:vikiInter{iviki}_suffix
+      if exists('g:vikiInter' . iviki)
+         let ivaddr = g:vikiInter{iviki}
+         if exists('g:vikiInter' . iviki . '_suffix')
+            let ivsfx = g:vikiInter{iviki}_suffix
+         endif
+      elseif has_key(g:viki_intervikis, iviki)
+         let ivaddr = g:viki_intervikis[iviki][0]
+         let ivsfx  = g:viki_intervikis[iviki][1]
+      else 
+         continue
       endif
       let wikidef = [ivaddr, ivsfx]
       let g:utlextra_interwikis[iviki] = wikidef
@@ -61,6 +80,10 @@ function s:GetWikiEntryAsList(wikiName, knownWikis)
       unlet wikidef
       let wikidef = w
       let a:knownWikis[a:wikiName] = wikidef
+   else 
+      while len(wikidef) < 2
+         call add(wikidef, '')
+      endwhile
    endif
    return wikidef
 endfunc
@@ -147,10 +170,7 @@ endfunc
 "    3) return Utl_AddressScheme_{scheme}(new_uri)
 "  Doc: <../plugin/utl_scm.vim#r=implscmfunc>
 function! utlx_interwiki#HandleScheme_interwiki(auri, fragment, mode, utl_version)
-   if g:utlextra_import_viki > 0
-      call s:ParseViki_InterVikis()
-      let g:utlextra_import_viki = 0
-   endif
+   call utlx_interwiki#Init()
    if ! exists('b:utlextra_interwikis') || ! exists('b:utlextra_interwikis_chgtck') 
             \ || b:utlextra_interwikis_chgtck != b:changedtick
       let b:utlextra_interwikis = s:ExtraclLocalWikiDefs()

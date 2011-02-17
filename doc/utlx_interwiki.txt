@@ -1,0 +1,166 @@
+*utlx_interwiki.txt*   UTL Interwiki Extension    Last Change: February 2011
+
+Index
+
+   Description                            |utlxiv_description|
+   Interwikis defined in a file           |utlxiw_incurrentfile|
+   Some examples                          |utlxiw_examples|
+   Global interwikis                      |utlxiw_global|
+   Customization                          |utlxiw_customization|
+
+
+Description                                  *utlxiv_description*
+===========
+
+UTL Interwiki adds a scheme for the vimscript#293 (UTL) that provides 
+interwiki linking.  It requires vimscript#293.  By default it supports UTL 
+version 3.0.  To use with UTL 2.0, see |utlxiw_customization| below.
+
+The interwiki links are executed by placing the cursor on the link, and 
+executing command :Utl (or the appropriate shortcut). The link will be 
+internally expanded by utlx_interwiki and passed to UTL which will open
+the link in the preferred program.
+
+The default intewiki scheme is 'iw://', but it can be changed to anything (see 
+|utlextra_interwiki_scheme|). The server part of the URL is the interwiki name 
+while the path of the URL is appended to the new URL.
+
+
+Interwikis defined in a file                            *utlxiw_incurrentfile*
+============================
+
+An interwiki link can be defined anywhere in the file. Such an interwiki will 
+only be available in the file where it is defined. The format of an interwiki 
+definition is:
+
+   [name]: URL | default_extension
+
+where default_extension starts with a dot and can be omitted. The URL can 
+contain a placeholder '%p' that will be replaced with the path of an interwiki 
+link. If the placeholder is omitted, the path will be appended to the URL.
+
+Interwikis can also be defined in comments, but only a limited set of comments 
+is currently supported and the feature has not been extensively tested:
+   " [wiki]:...
+   * [wiki]:...
+   # [wiki]:...
+   // [wiki]:...
+   /* [wiki]:...
+
+If the interwiki URL uses an empty wikiname, the link will be transformed
+as a link inside the current wiki. The path of the current file will be
+matched to all defined interwikis and if found, the settings for that wiki
+will be used. If a wiki isn't defined, the target file will have the same
+extension as the current file (if the path in URL doesn't already have an
+extension).
+   
+   'iw:///localfile'        --> ./localfile.txt
+   'iw:///localfile.viki'   --> ./localfile.viki
+   'iw://./localfile'       --> ./localfile.txt
+
+NOTE: The format of the interwiki definitions may change in the future to 
+avoid confilcts with other markup applications, for example:
+
+   [w=name]: URL | default_extension
+
+(please report confilcts and suggest alternatives on vim wiki).
+
+
+Some examples                              *utlxiw_examples*
+=============
+
+A local wiki:
+
+   Definition:
+   [mywiki]: /home/user/Documents/wikis/mywiki | .wiki
+
+   Itnerwiki link: iw://mywiki/projects
+   Expanded to:    /home/user/Documents/wikis/mywiki/projects.wiki
+
+   Itnerwiki link: iw://mywiki/projects#tn=TODO
+   Expanded to:    /home/user/Documents/wikis/mywiki/projects.wiki#tn=TODO
+
+Links to wikipedia articles:
+
+   Definition:
+   [wp]: http://en.wikipedia.org/wiki
+
+   Interwiki link: iw://wp/Vim_(text_editor)
+   Expanded to:    http://en.wikipedia.org/wiki/Vim_(text_editor)
+
+Links to Vim scripts on www.vim.org:
+
+   Definition:
+   [script]: http://www.vim.org/scripts/script.php?script_id=%p
+
+   Interwiki link: iw://script/2997
+   Expanded to:    http://www.vim.org/scripts/script.php?script_id=2997
+
+Google search:
+
+   [google]: http://www.google.com/search?q=%p
+
+   Interwiki link: iw://google/vim+editor
+   Expanded to:    http://www.google.com/search=vim+editor
+
+
+Global Interwikis                                          *utlxiw_global*
+=================
+
+Global wikis can be defined in .vimrc:
+
+   let g:utlextra_interwikis = {
+      \ 'mywiki': ['/home/user/Documents/wikis/mywiki', '.wiki'],
+      \ 'wp': 'http://en.wikipedia.com/wiki',
+      \ 'script': 'http://www.vim.org/scripts/script.php?script_id=%p',
+      \ 'google': 'http://www.google.com/search?q=%p',
+      \ }
+
+The format of g:|utlextra_interwikis| is similar to the format used in 
+vimscript#861 (Viki/Deplate). In fact if the 'intervikis' are defined for 
+Viki/Deplate, they will be imported by this script (interwikis defined in 
+g:|utlextra_interwikis| take precedence).
+
+If interwikis are defined globally and also in the current file, locally 
+defined interwikis take precedence.
+
+
+Customization                                     *utlxiw_customization*
+=============
+
+*utlextra_interwikis* = {
+      \ 'LOG': ['/path/to/log', '.txt'],
+      \ 'google': 'http://www.google.com/search?q=%p',
+      \ }
+   Register interwiki names. The key is the interwiki word, the value is 
+   either a string or a list. For files stred on disk this will be usually a 
+   list where the first element is the path to the wiki and the second element 
+   is the default extension for the wiki. For other URLs where the default 
+   filename extension is not provided, it can be either a list with one 
+   element or a string. The parameter '%p' anywhere in the value will be 
+   replaced with the URL path.
+
+*utlextra_interwiki_scheme*
+g:utlextra_interwiki_scheme = 'iw'
+   Change the scheme to use instead of 'iw'. Multiple schemes can
+   be used for interwiki linking, for example 'iw,wiki'.
+
+*utlextra_utl_version*
+g:utlextra_utl_version = 3
+   Which version of UTL is installed. The interface for defining
+   additional schemas handlded by UTL has changed between versions
+   2 and 3. This script supports version 3 by default.
+   Set to 2 to use with UTL 2.0.
+
+*utlextra_import_viki*
+g:utlextra_import_viki = 1
+   Set to 1 to import interwikis from Viki/Deplate.
+   Set to 0 to skip importation.
+
+*utlextra_interwiki_match_case*
+g:utlextra_interwiki_match_case = 0
+   If set to 1, the exact case must be used for interwiki names.
+   If set to 0, first a case-sensitive match will be performed
+   and if it fails a case insensitive will be used.
+
+vim:tw=78:fo=tcq2:isk=!-~,^*,^\|,^\":ts=8:ft=help:norl:
